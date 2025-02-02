@@ -524,12 +524,24 @@ add_executable(
   ${source_application_platform_dir}/platform_health_management.cpp
 )
 
+find_library(OBD_II_EMULATOR_LIB
+  NAMES obd_ii_emulator
+  PATHS /usr/lib
+  NO_DEFAULT_PATH
+)
+
+find_library(DOIP_LIB
+  NAMES doip_lib
+  PATHS /usr/lib
+  NO_DEFAULT_PATH
+)
+
 target_link_libraries(
   adaptive_autosar
   curl
   jsoncpp
-  obd_ii_emulator
-  doip_lib
+  ${OBD_II_EMULATOR_LIB}
+  ${DOIP_LIB}
   arxml
   ara_exec
   ara_log
