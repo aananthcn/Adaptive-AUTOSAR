@@ -1,7 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <stdint.h>
+// #include <stdint.h> commented by Aananth
+#include <cstdint>
+
 
 namespace ara
 {

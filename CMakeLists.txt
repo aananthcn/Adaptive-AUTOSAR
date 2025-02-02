@@ -526,8 +526,8 @@ add_executable(
 
 target_link_libraries(
   adaptive_autosar
-  libcurl
-  jsoncpp_lib
+  curl
+  jsoncpp
   obd_ii_emulator
   doip_lib
   arxml

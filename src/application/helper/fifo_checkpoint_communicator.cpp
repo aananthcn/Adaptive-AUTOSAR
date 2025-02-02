@@ -3,6 +3,10 @@
 #include "../../ara/com/helper/payload_helper.h"
 #include "./fifo_checkpoint_communicator.h"
 
+// Aananth added this
+#include <stdexcept>
+
+
 namespace application
 {
     namespace helper
