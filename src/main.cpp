@@ -2,8 +2,13 @@
 #include "./application/platform/execution_management.h"
 
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <csignal>
+#include <chrono>
 
-bool running;
+std::atomic<bool> running{true};
+
 AsyncBsdSocketLib::Poller poller;
 application::platform::ExecutionManagement *executionManagement;
 
@@ -22,6 +27,14 @@ void PrintUsage()
     std::cout << "  - The program may ask for the bearer token interactively, with input hidden for security." << std::endl;
 }
 
+// Signal handler to stop execution on SIGTERM or SIGABRT
+void SignalHandler(int signal)
+{
+    std::cout << "\n[INFO]: Caught signal " << signal << ", shutting down...\n";
+    running = false;
+}
+
+
 void performPolling()
 {
     const std::chrono::milliseconds cSleepDuration{
@@ -36,6 +49,12 @@ void performPolling()
 
 int main(int argc, char *argv[])
 {
+    // Register signal handlers
+    std::signal(SIGTERM, SignalHandler);
+    std::signal(SIGABRT, SignalHandler);
+    std::signal(SIGINT, SignalHandler);
+    std::cout << "Starting AUTOSAR Execution Management ...\n";
+
     if (argc != 5) {
         std::cerr << "[ERROR]: Incorrect number of arguments provided!\n"
                 << "Expected 4 arguments, but received " << (argc - 1) << ".\n\n";
@@ -45,6 +64,7 @@ int main(int argc, char *argv[])
 
     application::helper::ArgumentConfiguration _argumentConfiguration(argc, argv);
 
+#if EM_SECURITY_ENABLED
     bool _successful{_argumentConfiguration.TryAskingVccApiKey()};
     if (!_successful)
     {
@@ -59,21 +79,40 @@ int main(int argc, char *argv[])
         std::cout << "Asking for the OAuth 2.0 bear key is failed!";
         return -1;
     }
+#endif
 
     running = true;
     executionManagement = new application::platform::ExecutionManagement(&poller);
     executionManagement->Initialize(_argumentConfiguration.GetArguments());
+    std::cout << "[INFO]: created ExecutionManagement::Main() thread.\n";
 
-    std::future<void> _future{std::async(std::launch::async, performPolling)};
+    //std::future<void> _future{std::async(std::launch::async, performPolling)};
+    std::thread pollingThread(performPolling);
+    std::cout << "[INFO]: created performPolling() thread to poll for events.\n";
 
-    std::getchar();
-    std::system("clear");
-    std::getchar();
+    // Wait until signal is received
+    while (running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 
-    int _result{executionManagement->Terminate()};
+    // Cleanup
+    if (pollingThread.joinable()) {
+        pollingThread.join();
+    }
+
+    int _result = 0;
+    try {
+        _result = executionManagement->Terminate();
+    } catch (const std::exception &e) {
+        std::cerr << "[ERROR]: Exception in Terminate(): " << e.what() << "\n";
+        _result = -1; // Indicate failure
+    } catch (...) {
+        std::cerr << "[ERROR]: Unknown exception in Terminate()\n";
+        _result = -1;
+    }
     running = false;
-    _future.get();
     delete executionManagement;
+    std::cout << "[INFO]: Shutting down...\n";
 
     return _result;
 }
