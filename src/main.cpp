@@ -15,9 +15,9 @@ application::platform::ExecutionManagement *executionManagement;
 
 void PrintUsage()
 {
-    std::cout << "Usage: <program> [config] [evconf] [dmconf] [phmcfg]\n" << std::endl;
+    std::cout << "Usage: <program> [emconf] [] [dmconf] [phmcfg]\n" << std::endl;
     std::cout << "Arguments:" << std::endl;
-    std::cout << "  config - Path to the general configuration file." << std::endl;
+    std::cout << "  emconf - Path to the execution management configuration file." << std::endl;
     std::cout << "  evconf - Path to the extended vehicle configuration file." << std::endl;
     std::cout << "  dmconf - Path to the diagnostic manager configuration file." << std::endl;
     std::cout << "  phmcfg - Path to the health monitoring configuration file." << std::endl;
